@@ -3,9 +3,9 @@ from math import sqrt
 
 @dataclass
 class Vector:
-    x: double = 0
-    y: double = 0
-    z: double = 0
+    x: float = 0
+    y: float = 0
+    z: float = 0
 
     def __add__(self, other):
         return Vector(self.x + other.x, self.y + other.y, self.z + other.z)
