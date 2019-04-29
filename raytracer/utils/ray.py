@@ -1,4 +1,5 @@
 from vector import *
+from dataclasses import dataclass
 
 @dataclass
 class Ray:

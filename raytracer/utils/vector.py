@@ -31,6 +31,9 @@ class Vector:
     def norm(self) -> float:
         return sqrt(self.x*self.x + self.y*self.y + self.z*self.z)
 
+    def normSquared(self) -> float:
+        return self.x*self.x + self.y*self.y + self.z*self.z
+
     def normalize(self):
         norm = self.norm()
         self.x /= norm
@@ -44,4 +47,19 @@ class Vector:
         return Vector(self.y * other.z - self.z * other.y,
                       self.z * other.x - self.x * other.z,
                       self.x * other.y - self.y * other.x)
+
+    def __getitem__(self, item):
+        switch = {0 : self.x, 1: self.y, 2: self.z}
+        return switch[item]
+
+    def __setitem__(self, key, value):
+        if key == 0:
+            self.x = value
+        elif key == 1:
+            self.y = value
+        elif key == 2:
+            self.z = value
+        else:
+            raise RuntimeError("Not a valid index")
+
 
