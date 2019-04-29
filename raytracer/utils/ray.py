@@ -11,8 +11,8 @@ class Ray:
 
     inv_d: Vector = Vector(0,0,0)
 
-    def at_time(self, t):
-        return self.o + self.t * self.d
+    def at_time(self, t) -> Vector:
+        return self.o + t * self.d
 
     #may not be necessary but I'm putting this in here for the sake of completion later if necessary
     def transform_by(self, t):

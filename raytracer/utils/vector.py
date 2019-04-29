@@ -28,7 +28,7 @@ class Vector:
     def __truediv__(self, other: float):
         return self.__mul__(1.0/other)
 
-    def norm(self):
+    def norm(self) -> float:
         return sqrt(self.x*self.x + self.y*self.y + self.z*self.z)
 
     def normalize(self):

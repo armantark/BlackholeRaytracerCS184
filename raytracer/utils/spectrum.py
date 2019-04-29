@@ -28,7 +28,7 @@ class Spectrum:
     def __truediv__(self, other):
         return Spectrum(self.r / other.r, self.g / other.g, self.b / other.b)
 
-    def illum(self):
+    def illum(self) -> float:
         return 0.2126 * self.r + 0.7152 * self.g + 0.0722 * self.b
 
     def __iter__(self):
