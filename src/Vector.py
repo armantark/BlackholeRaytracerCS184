@@ -22,6 +22,9 @@ class Vector:
     def __mul__(self, other: float):
         return Vector(self.x * other, self.y * other, self.z * other)
 
+    def __rmul__(self, other):
+        return self.__mul__(other)
+
     def __truediv__(self, other: float):
         return self.__mul__(1.0/other)
 
