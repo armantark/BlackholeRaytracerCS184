@@ -1,0 +1,1 @@
+from .blackhole import BlackHole

@@ -30,3 +30,6 @@ class Spectrum:
 
     def illum(self):
         return 0.2126 * self.r + 0.7152 * self.g + 0.0722 * self.b
+
+    def __iter__(self):
+        return iter((self.r, self.g, self.b))
