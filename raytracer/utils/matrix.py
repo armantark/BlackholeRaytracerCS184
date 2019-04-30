@@ -41,22 +41,22 @@ class Matrix:
 
     # may need some checking
     def __neg__(self):
-        return Matrix(-self[0][0], -self[0][1], -self[0][2],
-                      -self[1][0], -self[1][1], -self[1][2],
-                      -self[2][0], -self[2][1], -self[2][2])
+        return Matrix(-self[0][0], -self[1][0], -self[2][0],
+                      -self[0][1], -self[1][1], -self[2][1],
+                      -self[0][2], -self[1][2], -self[2][2])
 
     def __sub__(self, other):
         newMatrix = Matrix()
         for i in range(3):
             for j in range(3):
-                newMatrix[i][j] = self[i][j] - other[i][j]
+                newMatrix[j][i] = self[j][i] - other[j][i]
         return newMatrix
 
     def __add__(self, other):
         newMatrix = Matrix()
         for i in range(3):
             for j in range(3):
-                newMatrix[i][j] = self[i][j] + other[i][j]
+                newMatrix[j][i] = self[j][i] + other[j][i]
         return newMatrix
 
     def __radd__(self, other):
@@ -68,14 +68,14 @@ class Matrix:
             newMatrix = Matrix()
             for i in range(3):
                 for j in range(3):
-                    newMatrix[i][j] = self[i][j] * other
+                    newMatrix[j][i] = self[j][i] * other
             return newMatrix
         elif isinstance(other, Matrix):
             newMatrix = Matrix()
             for i in range(3):
                 for j in range(3):
                     for k in range(3):
-                        newMatrix[i][j] += self[i][k] * other[k][j]
+                        newMatrix[j][i] += self[k][i] * other[j][k]
             return newMatrix
         elif isinstance(other, Vector):
             return other[0]*self[0] + other[1]*self[1] + other[2]*self[2]
@@ -84,7 +84,7 @@ class Matrix:
         newMatrix = Matrix()
         for i in range(3):
             for j in range(3):
-                newMatrix[i][j] = self[j][i]
+                newMatrix[j][i] = self[i][j]
         return newMatrix
 
     #uhhh, let's just say we don't need an inverse.
@@ -130,7 +130,7 @@ class Matrix:
     # the original method uses some weird pointer arithmetic, idk how it translates exactly but w/e.
     # As a result, it may produce what is actually the transpose of the outer mult of two vectors
     def outer(cls, u: Vector, v: Vector):
-        return Matrix(u.x*v.x, u.y*v.x, u.z*v.x,
+        return Matrix(u.x * v.x, u.y*v.x, u.z*v.x,
                       u.x * v.y, u.y*v.y, u.z*v.y,
                       u.x * v.z, u.y*v.z, u.z*v.z)
 
