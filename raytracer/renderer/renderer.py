@@ -4,7 +4,12 @@ from .camera import Camera
 from objects import BlackHole
 
 def render(world: World, camera: Camera) -> Image.Image:
-    pass
+    for x in range(camera.resolution[0]):
+        for y in range(camera.resolution[1]):
+            ray = camera.cast_ray((x, y))
+            # physics
+
+
 
 
 def test_render(dimensions=(800,600)) -> Image.Image:

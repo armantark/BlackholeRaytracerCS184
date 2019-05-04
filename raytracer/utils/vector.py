@@ -48,6 +48,9 @@ class Vector:
                       self.z * other.x - self.x * other.z,
                       self.x * other.y - self.y * other.x)
 
+    def unit(self):
+        return self / self.norm()
+
     def __getitem__(self, item):
         switch = {0 : self.x, 1: self.y, 2: self.z}
         return switch[item]
