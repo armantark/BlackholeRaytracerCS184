@@ -13,5 +13,5 @@ class Camera:
             1
         )
 
-        ray = Ray(origin=self.position, direction=ray_direction.unit())
+        ray = Ray(position=self.position, velocity=ray_direction.unit())
         return ray

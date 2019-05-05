@@ -8,7 +8,7 @@ from objects import BlackHole
 def main():
     black_hole = BlackHole()
     world = World(objects=[black_hole])
-    camera = Camera()
+    camera = Camera(resolution=(100, 67))
     image = render(world, camera)
     image.save('test_render.png')
 

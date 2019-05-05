@@ -1,27 +1,44 @@
-from vector import *
+from utils import *
 from dataclasses import dataclass
 
 @dataclass
 class Ray:
     depth: int = 0
 
-    position: Vector = Vector(0, 0 ,0)
-    velocity = Vector(0, 0 ,0)
-    delta_t = 0.0001
+    position: Vector = Vector(0, 0, 0)
+    velocity: Vector = Vector(0, 0, 0)
+    delta_t = 0.01
 
-    def simulate(self, gravity_objects = []):
-        total_force = 0
-        for object in gravity_objects:
-            pass
-        accleration = 0  # implement later
-        new_position = self.position + self.velocity * self.delta_t
+    def simulate_to_end(self, gravity_objects = []):
 
-        for object in gravity_objects:
-            if object.
+        while (self.position - Vector(0.5, 0.5, 0.5)).norm() < 1:  # replace with better code for detecting exiting the worldbox
+            # print(self.position.x, self.position.y, self.position.z)
+            total_force = 0
 
+            for object in gravity_objects:
+                pass
 
-        self.velocity = (new_position - self.position) / self.delta_t;
-        self.position = new_position
+            accleration = 0  # implement later
+            new_position = self.position + self.velocity * self.delta_t
+
+            last_position = self.position
+
+            self.velocity = (new_position - self.position) / self.delta_t;
+            self.position = new_position
+
+            for object in gravity_objects:
+                if object.hit_by_ray(self, last_position):
+                    hit_position = self.position  # not accurate: e.g. move to surface of sphere
+                    hit_direction = self.velocity.unit()
+
+                    luminance = object.get_luminance(hit_position, hit_direction)  # maybe divide by distance travelled or sth?
+                    return luminance
+
+            # if (self.position - Vector(0.5, 0.5, 0.5)).norm() > 1: # replace with better code for detecting exiting the worldbox
+            #     return Spectrum()  # texture mapping?
+
+        return Spectrum()
+
 
 
     # min_t: float = 0
