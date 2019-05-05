@@ -8,6 +8,7 @@ class Disk:
         self.rotation = rotation
         self.radius = radius
         self.radius2 = radius ** 2
+        self.planenormal: Vector = '???'
 
     def intersectPlane(self, n: Vector, p0: Vector, l0: Vector, l: Vector, t: float):
         denom = n.dot(l)
@@ -20,7 +21,7 @@ class Disk:
     def hit_by_ray(self, r: Ray, last_position: Vector) -> bool:
         t = 0
         #need to figure out what n is, it is the perpendicular vector to the plane
-        if self.intersectPlane(n='???'.unit(), p0=self.position.unit(),
+        if self.intersectPlane(n=self.planenormal.unit(), p0=self.position.unit(),
                                l0=r.position.unit(), l=r.velocity.unit(), t=t):
             p: Vector = r.position + r.velocity * t
             v: Vector = p - self.position
