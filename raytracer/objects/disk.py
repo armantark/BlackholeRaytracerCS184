@@ -7,7 +7,7 @@ BASENORMAL = np.array([0,1,0])
 class Disk:
 
     def __init__(self, position: np.array = np.array([0.5, 0.5, 0.5]),
-                 rotation: np.array = np.array([180, 0, 0]), radius: float = 0.1):
+                 rotation: np.array = np.array([0, 0, 0]), radius: float = 0.1):
         self.position = position
         self.rotation = rotation
         self.radius = radius
@@ -36,6 +36,8 @@ class Disk:
     def hit_by_ray(self, r: Ray, last_position: np.array) -> bool:
         t = 0
         # need to figure out what n is, it is the perpendicular vector to the plane
+        # return self.intersectPlane(n=self.planenormal / np.linalg.norm(self.planenormal), p0=self.position / np.linalg.norm(self.position),
+        #                            l0=r.position / np.linalg.norm(r.position), l=r.velocity / np.linalg.norm(r.velocity), t=t)
         if self.intersectPlane(n=self.planenormal / np.linalg.norm(self.planenormal), p0=self.position / np.linalg.norm(self.position),
                                l0=r.position / np.linalg.norm(r.position), l=r.velocity / np.linalg.norm(r.velocity), t=t):
             p: np.array = r.position + r.velocity * t
