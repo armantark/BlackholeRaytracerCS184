@@ -7,7 +7,7 @@ class Ray:
 
     position: Vector = Vector(0, 0, 0)
     velocity: Vector = Vector(0, 0, 0)
-    delta_t = 0.01
+    delta_t = 0.1
 
     def simulate_to_end(self, gravity_objects = []):
 

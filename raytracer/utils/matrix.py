@@ -1,6 +1,5 @@
 from typing import List
-
-from vector import *
+from utils import Vector
 
 #3x3 ROW MAJOR matrix
 class Matrix:

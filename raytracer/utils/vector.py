@@ -41,7 +41,7 @@ class Vector:
         self.z /= norm
 
     def dot(self, other):
-        return Vector(self.x * other.x, self.y * other.y, self.z * other.z)
+        return self.x * other.x + self.y * other.y + self.z * other.z
 
     def cross(self, other):
         return Vector(self.y * other.z - self.z * other.y,
