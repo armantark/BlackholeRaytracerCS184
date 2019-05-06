@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from math import sqrt
 
+#DEPRECATED! Use Numpy!!
 @dataclass
 class Vector:
     x: float = 0

@@ -1,6 +1,7 @@
 from typing import List
 from utils import Vector
 
+#DEPRECATED! Use numpy!!
 #3x3 ROW MAJOR matrix
 class Matrix:
 
