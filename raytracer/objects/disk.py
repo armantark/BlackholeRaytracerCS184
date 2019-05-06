@@ -29,7 +29,7 @@ class Disk:
         denom = np.dot(n.reshape(1,3), l.reshape(3,1))
         if denom > 1e-6:
             p0l0 = p0 - l0
-            t = p0l0.dot(n) / denom
+            t = np.dot(p0l0,n) / denom
             return t >= 0
         return False
 
