@@ -2,7 +2,7 @@ from utils import Spectrum, Ray
 from math import cos, sin, radians
 import numpy as np
 
-BASENORMAL = np.array([0,1,0])
+BASENORMAL = np.array([0, 1, 1])
 
 class Disk:
 
@@ -16,13 +16,33 @@ class Disk:
         y = radians(rotation[1])
         z = radians(rotation[2])
         # this is the result of multiplying rotation matrices by x, y, and z axes together
-        self.rotation_matrix_for_normal = np.matrix([[cos(y) * cos(z), cos(z) * sin(x) * sin(y) - cos(x) * sin(z),
-                                                 cos(x) * cos(z) * sin(y) + sin(x) * sin(z)],
 
-                                                 [cos(y) * sin(z), cos(x) * cos(z) + sin(x) * sin(y) * sin(z),
-                                                 cos(x) * sin(y) * sin(z) - cos(z) * sin(x)],
+        Rx = np.array([
+            [1.0, 0.0, 0.0],
+            [0.0, np.cos(rx), -np.sin(rx)],
+            [0.0, np.sin(rx), np.cos(rx)]])
 
-                                                 [-sin(y), cos(y) * sin(x), cos(x) * cos(y)]])
+        Ry = np.array([
+            [np.cos(ry), 0.0, np.sin(ry)],
+            [0.0, 1.0, 0.0],
+            [-np.sin(ry), 0.0, np.cos(ry)]])
+
+        Rz = np.array([
+            [np.cos(rz), -np.sin(rz), 0.0],
+            [np.sin(rz), np.cos(rz), 0.0],
+            [0.0, 0.0, 1.0]])
+
+        self.rotation_matrix_for_normal = np.matmul(np.matmul(Rz, Ry), Rx)
+
+
+
+        # self.rotation_matrix_for_normal = np.matrix([[cos(y) * cos(z), cos(z) * sin(x) * sin(y) - cos(x) * sin(z),
+        #                                          cos(x) * cos(z) * sin(y) + sin(x) * sin(z)],
+        #
+        #                                          [cos(y) * sin(z), cos(x) * cos(z) + sin(x) * sin(y) * sin(z),
+        #                                          cos(x) * sin(y) * sin(z) - cos(z) * sin(x)],
+        #
+        #                                          [-sin(y), cos(y) * sin(x), cos(x) * cos(y)]])
         self.planenormal: np.array = self.rotation_matrix_for_normal * BASENORMAL.reshape(3,1)
 
     def intersectPlane(self, n: np.array, p0: np.array, l0: np.array, l: np.array, t: float):
