@@ -5,17 +5,25 @@ G = 6.674e-11
 C = 2.9979e8
 
 class BlackHole:
-    def __init__(self, position: np.array = np.array([0.5, 0.5, 0.5]), mass: float = 1e+25):
-        # 3e+25 kg -> schwarzschield radius approx. 5cm
+    def __init__(
+        self,
+        position: np.array = np.array([0.5, 0.5, 0.5]),
+        mass: float = 7.5e+24
+    ):
         self.position = position
         self.mass = mass
         self.radius = 2 * G * mass / (C ** 2)
 
     def hit_by_ray(self, r: Ray, last_position: np.array) -> bool:
-        if np.linalg.norm(r.position - self.position) <= (2.5 * self.radius):  # photon sphere
+        # if np.linalg.norm(r.position - self.position) <= (2.5 * self.radius):  # photon sphere
+        if np.linalg.norm(r.position - self.position) <= self.radius:  # using event horizon for testing purposes
             return True
 
         return False
 
     def get_luminance(self, out_position: np.array, out_direction: np.array) -> Spectrum:
-        return Spectrum(255, 0, 0)
+        relative_direction = out_position - self.position
+        if sum(1 if i > 0 else 0 for i in relative_direction) % 2 == 0:
+            return Spectrum(255, 0, 0)
+
+        return Spectrum(128, 0, 0)

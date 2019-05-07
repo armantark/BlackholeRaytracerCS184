@@ -3,9 +3,9 @@ from dataclasses import dataclass
 
 @dataclass
 class Spectrum:
-    r: float = 0
-    g: float = 0
-    b: float = 0
+    r: int = 0
+    g: int = 0
+    b: int = 0
 
     def __add__(self, other):
         return Spectrum(self.r + other.r, self.g + other.g, self.b + other.b)
@@ -20,13 +20,19 @@ class Spectrum:
         raise RuntimeError("???")
 
     def __mul__(self, other):
-        return Spectrum(self.r * other.r, self.g * other.g, self.b * other.b)
+        if (isinstance(other, Spectrum)):
+            return Spectrum(self.r * other.r, self.g * other.g, self.b * other.b)
+
+        return Spectrum(self.r * other, self.g * other, self.b * other)
 
     def __rmul__(self, other):
         return self.__mul__(other)
 
     def __truediv__(self, other):
-        return Spectrum(self.r / other.r, self.g / other.g, self.b / other.b)
+        if (isinstance(other, Spectrum)):
+            return Spectrum(self.r / other.r, self.g / other.g, self.b / other.b)
+
+        return Spectrum(self.r / other, self.g / other, self.b / other)
 
     def illum(self) -> float:
         return 0.2126 * self.r + 0.7152 * self.g + 0.0722 * self.b

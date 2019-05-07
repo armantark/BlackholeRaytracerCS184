@@ -7,8 +7,8 @@ class Ray:
     depth: int = 0
 
     position: np.array = np.array([0,0,0])
-    velocity: np.array = np.array([0,0,0])
-    delta_t = 0.1
+    velocity: np.array = np.array([1,0,0])
+    delta_t = 0.01
 
     def simulate_to_end(self, gravity_objects = []):
 
@@ -53,5 +53,3 @@ class Ray:
     #may not be necessary but I'm putting this in here for the sake of completion later if necessary
     def transform_by(self, t):
         raise NotImplementedError()
-
-
