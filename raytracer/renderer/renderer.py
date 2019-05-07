@@ -3,12 +3,19 @@ from .world import World
 from .camera import Camera
 from objects import BlackHole
 
-def render(world: World, camera: Camera) -> Image.Image:
+def render(world: World, camera: Camera, render_origin=(0, 0), render_size=None) -> Image.Image:
     image = Image.new('RGB', camera.resolution)
 
-    for x in range(camera.resolution[0]):
-        for y in range(camera.resolution[1]):
+    if render_size is None:
+        render_size = camera.resolution
+
+    for i in range(render_size[0]):
+        for j in range(render_size[1]):
+            x = i + render_origin[0]
+            y = j + render_origin[1]
+
             print(x, y)
+
             ray = camera.cast_ray((x, y))
             lum = ray.simulate_to_end(world.objects)
             image.putpixel((x, y), tuple(lum))
