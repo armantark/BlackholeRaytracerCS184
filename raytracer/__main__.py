@@ -30,7 +30,7 @@ def main():
     world = World(objects=[black_hole, disk])
     camera = Camera(resolution=(150, 100))
     image = render(world, camera)
-    image.save('test_render.png')
+    image.save('test_render_higherres.png')
 
 
 if __name__ == '__main__':
