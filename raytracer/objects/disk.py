@@ -16,6 +16,8 @@ class TestDisk:
         self.normal = normal
         self.inner_radius = inner_radius
         self.outer_radius = outer_radius
+        self.mass = 0
+
 
     def _intersects_plane(self, r: Ray, last_position: np.array) -> bool:
         relative_direction = np.dot(r.position - self.origin, self.normal)
