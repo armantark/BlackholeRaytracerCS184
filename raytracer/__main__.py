@@ -25,9 +25,10 @@ def main():
     #     outer_radius=black_hole.radius * 6
     # )
 
-    disk = Disk()
+    disk = TestDisk()
 
     world = World(objects=[black_hole, disk])
+    #resolution = 150, 100
     camera = Camera(resolution=(150, 100))
     image = render(world, camera)
     image.save('test_render_higherres.png')
