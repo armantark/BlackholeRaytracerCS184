@@ -5,7 +5,7 @@ from objects import BlackHole, Disk
 
 import numpy as np
 
-from objects.disk import TestDisk
+from objects.disk import Disk
 
 def normalize_vector(v: np.array) -> np.array:
     norm = np.linalg.norm(v)
@@ -21,7 +21,7 @@ def main():
     world_radius = 50000
 
     black_hole = BlackHole(mass=1.989e30, origin=np.array([world_radius]*3))
-    disk = TestDisk(
+    disk = Disk(
         origin=np.array([world_radius]*3),
         normal=disk_direction,
         inner_radius=black_hole.radius * 3,
@@ -31,7 +31,7 @@ def main():
     # disk = Disk()
 
     world = World(objects=[black_hole, disk], size=np.array([world_radius*2]*3))
-    camera = Camera(resolution=(200, 200), fov=(1, 0.66), position=np.array([world_radius,world_radius,0]))
+    camera = Camera(resolution=(50, 30), fov=(1, 0.66), position=np.array([world_radius,world_radius,0]))
     image = render(world, camera)
     image.save('test_render_higherres.png')
 
