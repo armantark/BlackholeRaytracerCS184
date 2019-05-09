@@ -66,6 +66,7 @@ class Ray:
                     hit_direction = self.velocity / np.linalg.norm(self.velocity)
 
                     luminance = object.get_luminance(hit_position, hit_direction)  # maybe divide by distance travelled or sth?
+                    print(str(luminance))
                     return luminance
 
             # print(gravity_objects[0].radius)

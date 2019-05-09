@@ -39,3 +39,6 @@ class Spectrum:
 
     def __iter__(self):
         return iter((self.r, self.g, self.b))
+
+    def __str__(self):
+        return "(" + str(self.r) + ", " + str(self.g) + ", " + str(self.b) + ")"

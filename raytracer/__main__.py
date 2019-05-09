@@ -3,9 +3,8 @@ import random
 
 from renderer.renderer import render
 from renderer import Camera, World
-from objects import BlackHole, Disk, Star
+from objects import BlackHole, Disk, Background
 from numba import jit
-from bridson import poisson_disk_samples
 
 import numpy as np
 
@@ -19,15 +18,15 @@ def normalize_vector(v: np.array) -> np.array:
     return v / norm
 
 
-def generate_stars(num: int, world_radius: int) -> [Star]:
-    stars = []
-    spacing = 5000
-
-    for i in range(num):
-        x = world_radius + random.randint(-30000, 30000)
-        y = world_radius + random.randint(-30000, 30000)
-        stars.append(Star(origin=np.array([x, y, world_radius+40000])))
-    return stars
+# def generate_stars(num: int, world_radius: int) -> [Star]:
+#     stars = []
+#     spacing = 5000
+#
+#     for i in range(num):
+#         x = world_radius + random.randint(-30000, 30000)
+#         y = world_radius + random.randint(-30000, 30000)
+#         stars.append(Star(origin=np.array([x, y, world_radius+40000])))
+#     return stars
 
 # import plac
 # @plac.annotation
@@ -46,14 +45,17 @@ def main():
         inner_radius=black_hole.radius * 3,
         outer_radius=black_hole.radius * 6
     )
+    bg = Background()
 
-    # objects_list.append(black_hole)
-    # objects_list.append(disk)
-    objects_list.extend(generate_stars(10, world_radius))
+
+    objects_list.append(black_hole)
+    objects_list.append(disk)
+    # objects_list.extend(generate_stars(10, world_radius))
+    objects_list.append(bg)
     # disk = Disk()
 
     world = World(objects=objects_list, size=np.array([world_radius * 2] * 3))
-    camera = Camera(resolution=(50, 33), fov=(1, 0.66), position=np.array([world_radius, world_radius, 0]))
+    camera = Camera(resolution=(100, 67), fov=(1, 0.66), position=np.array([world_radius, world_radius, 0]))
     image = render(world, camera)
     image.save('test_render_higherres.png')
 
