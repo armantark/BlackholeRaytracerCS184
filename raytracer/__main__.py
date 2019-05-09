@@ -31,7 +31,7 @@ def main():
     # disk = Disk()
 
     world = World(objects=[black_hole, disk], size=np.array([world_radius*2]*3))
-    camera = Camera(resolution=(50, 30), fov=(1, 0.66), position=np.array([world_radius,world_radius,0]))
+    camera = Camera(resolution=(450, 270), fov=(1, 0.66), position=np.array([world_radius,world_radius,0]))
     image = render(world, camera)
     image.save('test_render_higherres.png')
 

@@ -39,7 +39,7 @@ class Disk:
 
     def get_luminance(self, out_position: np.array, out_direction: np.array) -> Spectrum:
         inner_spectrum = Spectrum(255, 255, 255)
-        outer_spectrum = Spectrum(163, 163, 163)
+        outer_spectrum = Spectrum(255, 255, 255)
 
         distance = np.linalg.norm(out_position - self.origin)
         ratio = (distance - self.inner_radius) / (self.outer_radius - self.inner_radius)

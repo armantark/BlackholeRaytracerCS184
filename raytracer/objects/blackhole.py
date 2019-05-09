@@ -23,7 +23,7 @@ class BlackHole:
 
     def get_luminance(self, out_position: np.array, out_direction: np.array) -> Spectrum:
         relative_direction = out_position - self.origin
-        if sum(1 if i > 0 else 0 for i in relative_direction) % 2 == 0:
-            return Spectrum(255, 0, 0)
+        # if sum(1 if i > 0 else 0 for i in relative_direction) % 2 == 0:
+        #     return Spectrum(255, 0, 0)
 
-        return Spectrum(128, 0, 0)
+        return Spectrum(0, 0, 0)
