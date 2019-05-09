@@ -4,7 +4,7 @@ import numpy as np
 class Background:
     def __init__(
         self,
-        origin: np.array =  np.array([50000, 50000, 60000]),
+        origin: np.array =  np.array([50000, 50000, 80000]),
         normal: np.array = np.array([0, 0, 1])
     ):
         self.origin = origin
