@@ -32,7 +32,7 @@ def normalize_vector(v: np.array) -> np.array:
 # @plac.annotation
 @jit
 def main():
-    disk_direction = normalize_vector(np.array([-1, -20, -1]))
+    disk_direction = normalize_vector(np.array([0, 1, .25]))
 
     world_radius = 50000
 
@@ -42,7 +42,7 @@ def main():
     disk = TestDisk(
         origin=np.array([world_radius] * 3),
         normal=disk_direction,
-        inner_radius=black_hole.radius * 3,
+        inner_radius=black_hole.radius * 2.6,
         outer_radius=black_hole.radius * 6
     )
     bg = Background()
