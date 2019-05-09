@@ -1,0 +1,273 @@
+
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<title>Black Hole Raytracer | CS 184</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rel="stylesheet" type="text/css" href="main.css"/>
+<link rel="stylesheet" type="text/css" href="res/featherlight.min.css" />
+<link rel="stylesheet" type="text/css"
+    href="https://fonts.googleapis.com/css?family=Open+Sans:400,700">
+</head>
+<body>
+
+<section class="header">
+
+<h1>Final Project: Black Hole Raytracer</h1>
+<h2>Arman T (SID), Casper Y (SID), Lulu W (SID)</h2>
+
+</section>
+
+<section class="content">
+
+<section class="partIntro">
+<p>Black hole raytracer made using python from scratch. Rendered using image library PIL (Pillow).</p>
+</section>
+
+<section class="partTOC">
+<h3>Table of Contents</h3>
+<ol start="0">
+<li><a href="#abstract">Abstract</a></li>
+<li><a href="#approach">Technical Approach</a></li>
+<li><a href="#results">Results</a></li>
+<li><a href="#references">References</a></li>
+</ol>
+</section>
+
+<section class="abstract">
+<a name="abstract" class="anchor"><h3>Part 0: Abstract</h3></a>
+
+<p>For this final project for CS184, our group made a black hole raytracer utilizing Python's image library PIL (Pillow) to render
+the resulting images. The result was a black hole as shown through a surrounding accretion disk which is colored non-black.
+Our logic was based on both physics principles of black holes (ie/ using black hole mass to calculate event horizon radius for
+determining luminance) as well as graphics principles (ie/ ray casting/tracing). </p>
+
+<p>The program is run simply through running the main function, which will render an image of a black hole and accretion disk utilizing
+  object classes written, and save it to an image (png) file.</p>
+</section>
+
+<section class="approach">
+<a name="approach" class="anchor"><h3>Part 1: Technical Approach</h3></a>
+
+<a name="approach-1" class="anchor"><h4>Setup</h4></a>
+<p>Since this project involves using light rays cast from the camera to the scene, we had to use largely the same logic of raytracing
+from project 3. However, writing it from scratch turned out to be a lot less tedious than porting over segments of code from project 3
+itself.  We created different classes for the objects needed (black hole and accretion disk objects) in the scene, as well as the tools needed for the renderer
+(camera, renderer, world). Lastly, we utilized the logic for spectrum and ray objects from project 3 in order to write our own <code>ray.py</code>
+and <code>spectrum.py</code> classes.</p>
+
+<p>Our objects comprise of black hole and accretion disk objects. Their compositions are as shown:</p>
+<div class="codeWrapper">
+<code>
+  class BlackHole:
+    def init(...):
+      self.origin
+      self.mass
+      self.radius
+    def hit_by_ray(...)
+    def get_luminance(...)
+</code>
+</div>
+
+<div class="codeWrapper">
+<code>
+  class Disk:
+    def init(...):
+      self.origin
+      self.mass
+      self.inner_radius
+      self.outer_radius
+      self.normal
+    def _intersects_plane(...)
+    def hit_by_ray(...)
+    def get_luminance(...)
+</code>
+</div>
+
+<a name="approach-2" class="anchor"><h4>Part 1.2: CUDA and the GPU</h4></a>
+<p>However this is still far to slow for interactivity. The CPU can't take
+advantage of the inherent parallelism of the problem like the GPU can. Thus, the
+next step was to move everything over to CUDA code in a GPU kernel.</p>
+
+<p>Because I have an NVidia card, CUDA was the logical choice. This conversion
+required several changes. First all recursive code had to be changed to
+iterative solutions. This meant that I had to store the attenuation of the
+throughput, and then every time I interact with a surface, I would combine this
+into the attenuation.</p>
+
+<p>Next, I had to convert the scene data into a form that could be used on the
+GPU. This meant that I had to convert materials, lights, primitives, and the BVH
+into a GPU friendly format. For the first two, I packed the information into a
+struct containing a union of the different types. This allowed for regularly
+packed information. These were placed into texture objects for faster lookup of
+the data<a href="#ref1" class="reflink">[1]</a>.</p>
+
+<p>The BVH had a similar treatment, but was stored in the texture object in a
+more efficient order. By linearizing the BVH tree in an order that allows nodes
+that are near each other to be near each other in memory, the GPU can take
+advantage of the spacial locality when
+traversing<a href="#ref2" class="reflink">[2]</a>. This is even better because
+when the intersection code is switched to an iterative version, it is apparent
+that the code would just go through the array from start to finish, perhaps
+skipping nodes, but never going backwards. This means that the GPU can take
+advantage of this when executing in
+parallel<a href="#ref3" class="reflink">[3]</a>.</p>
+
+<p>The primitives, including their vertices and normals, were done in a similar
+fashion. They were placed in the same order as the BVH so that intersections
+would be even faster.</p>
+
+<a name="approach-3" class="anchor"><h4>Part 1.3: Floats</h4></a>
+<p>The next optimization was to change all doubles to floats. Though this does
+sacrafice some quality, this allows for much faster execution. The kernel ran on
+the order of four times faster when this was done. There are still some relics
+of the double code in the codebase, but they are all hidden by preprocessor
+flags.</p>
+
+<p>This switch did prove to be difficult at first. Though it made the data much
+more compact in the texture objects. There were some accuracy errors that caused
+visual artifacts like striping on the walls. This was solved by subtracting an
+epsilon value from the ray lengths after an intersection was found. Previously,
+It was intersecting with an endpoint twice causing rays to be terminated when
+they shouldn't be. The floating point inaccuracies caused this occur.
+</p>
+
+<a name="approach-4" class="anchor"><h4>Part 1.4: BDPT</h4></a>
+<p>The next step to making the renderer faster was implementing bidirectional
+path tracing<a href="#ref4" class="reflink">[4]</a>. The core of this method is
+located in <code>pathtracer_trace_bidirectional_ray()</code> in
+<code>c_pathtracer.cu</code>. For each ray to sample, it grows a path from the
+light and from the eye. It computes the throughput for that given path and
+combines it. In order to do this on the GPU, and iterative growing of the path
+up to a given maximum size allows for a static path array to be used. This
+allows the GPU to optimize for a static stack size that can be precomputed via
+static analysis. After the path throughputs are calculated, Veach proposes using
+multiple importance sampling in order to fully optimize the minimization of
+variance. Right now the implementation averages the samples for each path length
+before combining them instead.</p>
+
+<a name="approach-5" class="anchor"><h4>Part 1.5: Volumetrics</h4></a>
+<p>In order to test the improvements of this renderer over project 3, volumetric
+global fog was added to the renderer. This was done using an absorbtion and a
+scattering coefficient (\(\sigma_a\) and \(\sigma_s\) respectively) to figure
+out the probability of a ray traveling \(t\) units without interating. This is
+equal to \(e^{-t\cdot (\sigma_a + \sigma_s)}\). Using this equation, one can
+find that the distance a particle travels before interacting is equal to
+\(\frac{-\log(r)}{\sigma_a + \sigma_s}\) where \(r\) is a random number from 0 to
+1. Using this, every time we test a ray for interacting with the scene, we
+generate a distance. If the distance is greater than whereever the ray hits a
+primitive in the scene, then the ray doesn't interact with the fog. Otherwise,
+the ray does interact with the fog at \(t\) units along its path.</p>
+
+<p>If this happens, the random number is generated from 0 to 1. If it is greater
+than \(\frac{\sigma_s}{\sigma_a + \sigma_s}\), then the ray was absorbed and the
+path is terminated. Otherwise, the ray was scattered. To calculate the direction
+of the scattering, the Schlick Phase function was used because it is a faster
+approximation of the Henyey-Greenstein function. Where \(k\) is the bias for
+back (\(k=-1\)) and forward (\(k=1\)) scattering, the Schlick Phas function
+says that likelihood of a ray going in a given direction \(\theta\) is equal to
+the following</p>
+
+<p>\[pdf(\theta)=\frac{1-k^2}{4\pi(1+k\cos\theta)^2}\]</p>
+
+<p>Thus a ray on the uniform sphere is generated and the associated probability
+for the angle it makes with the original ray is used to generate a probability
+with which the throughput is attenuated.</p>
+
+<a name="approach-6" class="anchor"><h4>Part 1.6: Gloss and Roughness</h4></a>
+<p>Glossy specularity was also implemented to test the renderer improvements.
+This effect was achieved by scattering the ray after it reflected or refracted
+by an amount based on its roughness. The code to do this follows.</p>
+<div class="codeWrapper"><code>rtrt_vec3 u = normalize(cross(rtrt_make_vec3(w.y, w.z, w.x), w));
+rtrt_vec3 v = cross(u, w);
+rtrt_vec3 sp = rtrt_uniform_hemisphere_sample(randState) * roughness;
+sp.y += 1 - roughness;
+w = sp.x * u + sp.z * v + sp.y * w;
+</code></div>
+<p>The first step is to get two vectors that are orthogonal to each other and
+the original ray after it is reflected or refracted. This gives us a coordinate
+frame. We then generate a sample on a uniform hemisphere. By multiplying this
+sample by a roughness and then adding to the vertical direction based on the
+roughness, the sample is biased towards the unit y vector when roughness is
+closer to zero. This sample is then used with the orthogonal vectors to generate
+a biased sample that perturbs the original ray after reflection or refraction.
+</p>
+
+<a name="approach-7" class="anchor"><h4>Part 1.7: Lessons Learned</h4></a>
+<p>The main thing that I learned through this project was that writing down the
+equations helped so much in understanding how they interact and work together.
+Understanding where solid angle and area integrals are being converted and how
+they are used together was very complicaated. Recording how I was using
+everything made it all much better.</p>
+
+</section>
+
+<section class="results">
+<a name="results" class="anchor"><h3>Part 2: Results</h3></a>
+
+<a name="results-1" class="anchor"><h4>Part 2.1: Specular</h4></a>
+<p>The following is a rendering of the reflective and refractive materials
+without roughness.</p>
+<div class="imgholder"><table><tr><td>
+<a href="#" data-featherlight="images/cb_spheres.png">
+<img src="images/cb_spheres.png"/></a>
+<figcaption>Rendering of <code>dae/sky/CBspheres.dae</code></figcaption>
+</td></tr></table></div>
+
+<a name="results-2" class="anchor"><h4>Part 2.2: Volumetric fog</h4></a>
+<p>The following is a rendering with volumetric fog on. The light was purple
+and the fog was white.</p>
+<div class="imgholder"><table><tr><td>
+<a href="#" data-featherlight="images/cb_float_fog.png">
+<img src="images/cb_float_fog.png"/></a>
+<figcaption>Rendering of <code>dae/sky/CBspheres_float.dae</code></figcaption>
+</td></tr></table></div>
+
+<a name="results-3" class="anchor"><h4>Part 2.3: Glossy</h4></a>
+<p>The following is a rendering of the reflective material with different
+roughnesses, though both are greater than 0.</p>
+<div class="imgholder"><table><tr><td>
+<a href="#" data-featherlight="images/cb_spheresglossy.png">
+<img src="images/cb_spheresglossy.png"/></a>
+<figcaption>Rendering of <code>dae/sky/CBspheres_glossy.dae</code></figcaption>
+</td></tr></table></div>
+
+</section>
+
+<section class="references">
+<a name="references" class="anchor"><h3>Part 3: References</h3></a>
+
+<a name="ref1" class="ref">[1]</a>
+<a href="https://devblogs.nvidia.com/parallelforall/cuda-pro-tip-kepler-texture-objects-improve-performance-and-flexibility/">
+M. Clark, "CUDA Pro Tip: Kepler Texture Objects Improve Performance and
+Flexibility", NVidia Accelerated Computinig, 2013. [Online]. Available:
+https://devblogs.nvidia.com/parallelforall/cuda-pro-tip-kepler-texture-objects-improve-performance-and-flexibility/.</a></br>
+
+<a name="ref2" class="ref">[2]</a>
+<a href="https://devblogs.nvidia.com/parallelforall/thinking-parallel-part-iii-tree-construction-gpu/">
+T. Karras, "Thinking Parallel, Part III: Tree Construction on the GPU", NVidia
+Accelerated Computing, 2012. [Online]. Available:
+https://devblogs.nvidia.com/parallelforall/thinking-parallel-part-iii-tree-construction-gpu/.</a></br>
+
+<a name="ref3" class="ref">[3]</a>
+<a href="https://devblogs.nvidia.com/parallelforall/thinking-parallel-part-ii-tree-traversal-gpu/">
+T. Karras, "Thinking Parallel, Part II: Tree Traversal on the GPU", NVidia
+Accelerated Computing, 2012. [Online]. Available:
+https://devblogs.nvidia.com/parallelforall/thinking-parallel-part-ii-tree-traversal-gpu/.</a></br>
+
+<a name="ref4" class="ref">[4]</a>
+<a href="http://graphics.stanford.edu/papers/veach_thesis/thesis.pdf">E.
+Veach, "Robust Monte Carlo Methods for Light Transport Simulation", Ph.D,
+Stanford University, 1997.</a></br>
+
+</section>
+
+</section>
+
+</div>
+
+<script type="text/javascript" src="res/jquery-2.2.2.min.js"></script>
+<script type="text/javascript" src="res/featherlight.min.js"></script>
+<script type="text/javascript" async src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+</body>
+</html>

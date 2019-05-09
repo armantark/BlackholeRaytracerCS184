@@ -2,29 +2,62 @@ from utils import *
 from dataclasses import dataclass
 import numpy as np
 
+
+_gravitational_constant = 7e-11  # this is not the real gravitational constant
+_speed_of_light = 3e8  # this is not the real speed of light
+
 @dataclass
 class Ray:
+    position: np.array
+    velocity: np.array
+
     depth: int = 0
 
-    position: np.array = np.array([0,0,0])
-    velocity: np.array = np.array([1,0,0])
-    delta_t = 0.01
+    delta_t = 0.000001
+
+    def __init__(self, position: np.array = np.array([0, 0, 0]), direction: np.array = np.array([1, 0, 0])):
+        self.position = position
+        self.velocity = direction * (_speed_of_light / np.linalg.norm(direction))
 
     def simulate_to_end(self, gravity_objects = []):
+        max_timesteps = 1000000000000
 
-        while np.linalg.norm(self.position - np.array([0.5, 0.5, 0.5])) < 1:  # replace with better code for detecting exiting the worldbox
+        # print(self.velocity)
+        # print(self.position)
+        # print(np.linalg.norm(self.position - np.array([50000, 50000, 50000])))
+        while np.linalg.norm(self.position - np.array([50000, 50000, 50000])) < 85000:  # replace with better code for detecting exiting the worldbox
             # print(self.position.x, self.position.y, self.position.z)
-            total_force = 0
+            # print('-')
+            # print(self.position)
+            max_timesteps -= 1
+            if max_timesteps < 0:
+                break
 
             for object in gravity_objects:
-                pass
+                if object.mass == 0:
+                    continue
+
+                direction = object.origin - self.position
+                distance = np.linalg.norm(direction)
+                acceleration_scalar = 2 * _gravitational_constant * object.mass / (distance ** 2)
+
+                acceleration = direction * (acceleration_scalar / distance)
+
+                self.delta_t = 0.000001 * max(1, (distance / 60000) ** 2)
+                # print(self.velocity)
+                # print(acceleration)
+
+                self.velocity += self.delta_t * acceleration
+
+            self.velocity *= _speed_of_light / np.linalg.norm(self.velocity)
+
+            # print(self.velocity)
 
             accleration = 0  # implement later
+
             new_position = self.position + self.velocity * self.delta_t
-
+            # print(new_position)
             last_position = self.position
-
-            self.velocity = (new_position - self.position) / self.delta_t
             self.position = new_position
 
             for object in gravity_objects:
@@ -35,9 +68,10 @@ class Ray:
                     luminance = object.get_luminance(hit_position, hit_direction)  # maybe divide by distance travelled or sth?
                     return luminance
 
-            # if (self.position - Vector(0.5, 0.5, 0.5)).norm() > 1: # replace with better code for detecting exiting the worldbox
-            #     return Spectrum()  # texture mapping?
-
+            # print(gravity_objects[0].radius)
+            # print(np.linalg.norm(self.position - np.array([0.5, 0.5, 0.5])))
+            # exit()
+        # exit()
         return Spectrum()
 
 
