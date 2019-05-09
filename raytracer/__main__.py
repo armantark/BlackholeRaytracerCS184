@@ -33,7 +33,7 @@ def normalize_vector(v: np.array) -> np.array:
 # @plac.annotation
 @jit
 def main():
-    disk_direction = normalize_vector(np.array([0, 1, .25]))
+    disk_direction = normalize_vector(np.array([0,1,0]))
 
     world_radius = 50000
 
@@ -56,7 +56,7 @@ def main():
     world = World(objects=objects_list, size=np.array([world_radius * 2] * 3))
     camera = Camera(resolution=(300, 200), fov=(1, 0.66), position=np.array([world_radius, world_radius, 0]))
     image = render(world, camera)
-    image.save('test_render_higherres.png')
+    image.save('test_render_010.png')
 
 
 if __name__ == '__main__':
