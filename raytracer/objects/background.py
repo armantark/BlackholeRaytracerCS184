@@ -4,7 +4,7 @@ import numpy as np
 class Background:
     def __init__(
         self,
-        origin: np.array =  np.array([50000, 50000, 100000]),
+        origin: np.array =  np.array([50000, 50000, 60000]),
         normal: np.array = np.array([0, 0, 1])
     ):
         self.origin = origin
@@ -30,7 +30,8 @@ class Background:
 
     def get_luminance(self, out_position: np.array, out_direction: np.array) -> Spectrum:
         relative_direction = out_position - self.origin
-        if sum(1 if i > 0 else 0 for i in relative_direction) % 2 == 0:
+        # print(relative_direction)
+        if np.floor(np.floor(relative_direction[0]/5000) + np.floor(relative_direction[1]/5000)) % 2 == 0:
             return Spectrum(0, 255, 0)
 
         return Spectrum(255, 255, 0)

@@ -55,7 +55,7 @@ def main():
     # disk = Disk()
 
     world = World(objects=objects_list, size=np.array([world_radius * 2] * 3))
-    camera = Camera(resolution=(100, 67), fov=(1, 0.66), position=np.array([world_radius, world_radius, 0]))
+    camera = Camera(resolution=(100, 66), fov=(1, 0.66), position=np.array([world_radius, world_radius, 0]))
     image = render(world, camera)
     image.save('test_render_higherres.png')
 
