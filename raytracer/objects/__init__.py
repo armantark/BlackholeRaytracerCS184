@@ -1,3 +1,3 @@
 from .blackhole import BlackHole
 from .disk import Disk
-from .star import Star
+from .background import Background

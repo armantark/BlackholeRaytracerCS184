@@ -16,10 +16,7 @@ class BlackHole:
 
     def hit_by_ray(self, r: Ray, last_position: np.array) -> bool:
         # if np.linalg.norm(r.position - self.origin) <= (2.5 * self.radius):  # photon sphere
-        if np.linalg.norm(r.position - self.origin) <= self.radius:  # using event horizon for testing purposes
-            return True
-
-        return False
+        return np.linalg.norm(r.position - self.origin) <= self.radius
 
     def get_luminance(self, out_position: np.array, out_direction: np.array) -> Spectrum:
         relative_direction = out_position - self.origin

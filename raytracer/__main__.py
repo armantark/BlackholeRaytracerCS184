@@ -11,6 +11,7 @@ import numpy as np
 from objects.disk import Disk
 
 
+
 def normalize_vector(v: np.array) -> np.array:
     norm = np.linalg.norm(v)
     if norm == 0:

@@ -68,8 +68,7 @@ class Ray:
                     hit_position = self.position  # not accurate: e.g. move to surface of sphere
                     hit_direction = self.velocity / np.linalg.norm(self.velocity)
 
-                    luminance = object.get_luminance(hit_position,
-                                                     hit_direction)  # maybe divide by distance travelled or sth?
+                    luminance = object.get_luminance(hit_position, hit_direction)  # maybe divide by distance travelled or sth?
                     print(str(luminance))
                     return luminance
 
