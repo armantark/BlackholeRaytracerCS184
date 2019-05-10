@@ -35,7 +35,7 @@
 </section>
 
 <section class="abstract">
-<a name="abstract" class="anchor"><h3>Part 0: Abstract</h3></a>
+<a name="abstract" class="anchor"><h3>Abstract</h3></a>
 
 <p>For this final project for CS184, our group made a black hole raytracer utilizing Python's image library PIL (Pillow) to render
 the resulting images. The result was a black hole as shown through a surrounding accretion disk which is colored non-black.
@@ -47,7 +47,7 @@ determining luminance) as well as graphics principles (ie/ ray casting/tracing).
 </section>
 
 <section class="approach">
-<a name="approach" class="anchor"><h3>Part 1: Technical Approach</h3></a>
+<a name="approach" class="anchor"><h3>Technical Approach</h3></a>
 
 <a name="approach-1" class="anchor"><h4>Setup</h4></a>
 <p>Since this project involves using light rays cast from the camera to the scene, we had to use largely the same logic of raytracing
@@ -58,8 +58,7 @@ and <code>spectrum.py</code> classes.</p>
 
 <p>Our objects comprise of black hole and accretion disk objects. Their compositions are as shown:</p>
 <div class="codeWrapper">
-<code>
-  class BlackHole:
+<code>class BlackHole:
     def init(...):
       self.origin
       self.mass
@@ -68,10 +67,9 @@ and <code>spectrum.py</code> classes.</p>
     def get_luminance(...)
 </code>
 </div>
-
+<br />
 <div class="codeWrapper">
-<code>
-  class Disk:
+<code>class Disk:
     def init(...):
       self.origin
       self.mass
@@ -84,152 +82,152 @@ and <code>spectrum.py</code> classes.</p>
 </code>
 </div>
 
-<a name="approach-2" class="anchor"><h4>Part 1.2: CUDA and the GPU</h4></a>
-<p>However this is still far to slow for interactivity. The CPU can't take
-advantage of the inherent parallelism of the problem like the GPU can. Thus, the
-next step was to move everything over to CUDA code in a GPU kernel.</p>
-
-<p>Because I have an NVidia card, CUDA was the logical choice. This conversion
-required several changes. First all recursive code had to be changed to
-iterative solutions. This meant that I had to store the attenuation of the
-throughput, and then every time I interact with a surface, I would combine this
-into the attenuation.</p>
-
-<p>Next, I had to convert the scene data into a form that could be used on the
-GPU. This meant that I had to convert materials, lights, primitives, and the BVH
-into a GPU friendly format. For the first two, I packed the information into a
-struct containing a union of the different types. This allowed for regularly
-packed information. These were placed into texture objects for faster lookup of
-the data<a href="#ref1" class="reflink">[1]</a>.</p>
-
-<p>The BVH had a similar treatment, but was stored in the texture object in a
-more efficient order. By linearizing the BVH tree in an order that allows nodes
-that are near each other to be near each other in memory, the GPU can take
-advantage of the spacial locality when
-traversing<a href="#ref2" class="reflink">[2]</a>. This is even better because
-when the intersection code is switched to an iterative version, it is apparent
-that the code would just go through the array from start to finish, perhaps
-skipping nodes, but never going backwards. This means that the GPU can take
-advantage of this when executing in
-parallel<a href="#ref3" class="reflink">[3]</a>.</p>
-
-<p>The primitives, including their vertices and normals, were done in a similar
-fashion. They were placed in the same order as the BVH so that intersections
-would be even faster.</p>
-
-<a name="approach-3" class="anchor"><h4>Part 1.3: Floats</h4></a>
-<p>The next optimization was to change all doubles to floats. Though this does
-sacrafice some quality, this allows for much faster execution. The kernel ran on
-the order of four times faster when this was done. There are still some relics
-of the double code in the codebase, but they are all hidden by preprocessor
-flags.</p>
-
-<p>This switch did prove to be difficult at first. Though it made the data much
-more compact in the texture objects. There were some accuracy errors that caused
-visual artifacts like striping on the walls. This was solved by subtracting an
-epsilon value from the ray lengths after an intersection was found. Previously,
-It was intersecting with an endpoint twice causing rays to be terminated when
-they shouldn't be. The floating point inaccuracies caused this occur.
+<p>
+  Based on research regarding the physics of light bending behavior surrounding black holes, we were able to deduct the manner in which we
+  would be able to visualize the black hole along with its accretion disk (comprising, in real life, of orbiting diffuse material but shown
+  in our renders as a solid colored disk around the black hole sphere). We drew out the initial visualization using a painting application
+  as shown:
 </p>
 
-<a name="approach-4" class="anchor"><h4>Part 1.4: BDPT</h4></a>
-<p>The next step to making the renderer faster was implementing bidirectional
-path tracing<a href="#ref4" class="reflink">[4]</a>. The core of this method is
-located in <code>pathtracer_trace_bidirectional_ray()</code> in
-<code>c_pathtracer.cu</code>. For each ray to sample, it grows a path from the
-light and from the eye. It computes the throughput for that given path and
-combines it. In order to do this on the GPU, and iterative growing of the path
-up to a given maximum size allows for a static path array to be used. This
-allows the GPU to optimize for a static stack size that can be precomputed via
-static analysis. After the path throughputs are calculated, Veach proposes using
-multiple importance sampling in order to fully optimize the minimization of
-variance. Right now the implementation averages the samples for each path length
-before combining them instead.</p>
+<div align="middle">
+  <table style="width=100%">
+    <tr>
+      <p>
+        Initial visualization idea:
+      </p>
+      <td>
+        <img src="images/orig_idea.png" align="middle" width="300px"/>
+        <figcaption align="middle">black hole with surrounding accretion disk</figcaption>
+      </td>
+    </tr>
 
-<a name="approach-5" class="anchor"><h4>Part 1.5: Volumetrics</h4></a>
-<p>In order to test the improvements of this renderer over project 3, volumetric
-global fog was added to the renderer. This was done using an absorbtion and a
-scattering coefficient (\(\sigma_a\) and \(\sigma_s\) respectively) to figure
-out the probability of a ray traveling \(t\) units without interating. This is
-equal to \(e^{-t\cdot (\sigma_a + \sigma_s)}\). Using this equation, one can
-find that the distance a particle travels before interacting is equal to
-\(\frac{-\log(r)}{\sigma_a + \sigma_s}\) where \(r\) is a random number from 0 to
-1. Using this, every time we test a ray for interacting with the scene, we
-generate a distance. If the distance is greater than whereever the ray hits a
-primitive in the scene, then the ray doesn't interact with the fog. Otherwise,
-the ray does interact with the fog at \(t\) units along its path.</p>
+  </table>
+</div>
 
-<p>If this happens, the random number is generated from 0 to 1. If it is greater
-than \(\frac{\sigma_s}{\sigma_a + \sigma_s}\), then the ray was absorbed and the
-path is terminated. Otherwise, the ray was scattered. To calculate the direction
-of the scattering, the Schlick Phase function was used because it is a faster
-approximation of the Henyey-Greenstein function. Where \(k\) is the bias for
-back (\(k=-1\)) and forward (\(k=1\)) scattering, the Schlick Phas function
-says that likelihood of a ray going in a given direction \(\theta\) is equal to
-the following</p>
 
-<p>\[pdf(\theta)=\frac{1-k^2}{4\pi(1+k\cos\theta)^2}\]</p>
+<p>Next, our group worked on the logic for writing our own renderer from scratch. This would allow us to do accurate raytracing
+and to visualize our physics. Our final renderer in <code>renderer.py</code> utilizes the python image library Pillow (PIL) in order
+to create a new image with inputted camera resolution (image size). Then we are able to cast rays from the camera into the world/scene,
+allowing us to visualize the physics of light behavior around a black hole defined by a position, mass and radius. Our main
+rendering pipeline is as such expressed by looping over the pixels:</p>
 
-<p>Thus a ray on the uniform sphere is generated and the associated probability
-for the angle it makes with the original ray is used to generate a probability
-with which the throughput is attenuated.</p>
 
-<a name="approach-6" class="anchor"><h4>Part 1.6: Gloss and Roughness</h4></a>
-<p>Glossy specularity was also implemented to test the renderer improvements.
-This effect was achieved by scattering the ray after it reflected or refracted
-by an amount based on its roughness. The code to do this follows.</p>
-<div class="codeWrapper"><code>rtrt_vec3 u = normalize(cross(rtrt_make_vec3(w.y, w.z, w.x), w));
-rtrt_vec3 v = cross(u, w);
-rtrt_vec3 sp = rtrt_uniform_hemisphere_sample(randState) * roughness;
-sp.y += 1 - roughness;
-w = sp.x * u + sp.z * v + sp.y * w;
-</code></div>
-<p>The first step is to get two vectors that are orthogonal to each other and
-the original ray after it is reflected or refracted. This gives us a coordinate
-frame. We then generate a sample on a uniform hemisphere. By multiplying this
-sample by a roughness and then adding to the vertical direction based on the
-roughness, the sample is biased towards the unit y vector when roughness is
-closer to zero. This sample is then used with the orthogonal vectors to generate
-a biased sample that perturbs the original ray after reflection or refraction.
+<div class="codeWrapper">
+<code>for pixel in image:
+    camera.cast_ray(pixel)
+    luminance = ray.simulate_to_end(world.objects)
+    image.putpixel(pixel, luminance)
+</code>
+</div>
+
+<p>We did not happen to utilize subpixels and supersampling, and thus the renderer itself was quite simple and implemented on a
+per pixel sampling basis.</p>
+
+<p>As for the actual raytracing logic, the simulate_to_end method in <code>ray.py</code> allowed us to utilize light physics as well as
+time stepping along with the raycasting hit logic for the objects in the scene, the accretion disk and the black hole itself. simulate_to_end
+outputs a Spectrum object which is the appropriate color for visualizing different objects.</p>
+
+<p>
+  INSERT DETAILS OF RAYTRACING HERE + PHYSICS EQUATIONS
 </p>
 
-<a name="approach-7" class="anchor"><h4>Part 1.7: Lessons Learned</h4></a>
-<p>The main thing that I learned through this project was that writing down the
-equations helped so much in understanding how they interact and work together.
-Understanding where solid angle and area integrals are being converted and how
-they are used together was very complicaated. Recording how I was using
-everything made it all much better.</p>
+<a name="approach-3" class="anchor"><h4>Problems Encountered</h4></a>
+<p></p>
+
+<p>
+</p>
+
+<a name="approach-4" class="anchor"><h4>Lessons Learned</h4></a>
+<p></p>
 
 </section>
 
 <section class="results">
-<a name="results" class="anchor"><h3>Part 2: Results</h3></a>
+<a name="results" class="anchor"><h3>Results</h3></a>
 
-<a name="results-1" class="anchor"><h4>Part 2.1: Specular</h4></a>
-<p>The following is a rendering of the reflective and refractive materials
-without roughness.</p>
+<a name="results-1" class="anchor"><h4>With colored grid</h4></a>
+<p>The following is a series of renderings of the black hole with a grid background showing the light interaction at different camera angles.</p>
 <div class="imgholder"><table><tr><td>
-<a href="#" data-featherlight="images/cb_spheres.png">
-<img src="images/cb_spheres.png"/></a>
-<figcaption>Rendering of <code>dae/sky/CBspheres.dae</code></figcaption>
+  <div>
+    <tr>
+        <td>
+          <img src="images/grid_nodisk.png" align="middle" width="300px"/>
+          <figcaption align="middle">initial rendering of black hole without accretion disk</figcaption>
+        </td>
+    </tr>
+  </div>
+  <div align="middle">
+    <table style="width=100%">
+      <tr>
+        <p>
+          Renderings of black hole with accretion disk:
+        </p>
+    <td>
+      <img src="images/grid1.png" align="middle" width="300px"/>
+    </td>
+    <td>
+      <img src="images/grid2.png" align="middle" width="300px"/>
+    </td>
+    <td>
+      <img src="images/grid3.png" align="middle" width="300px"/>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <img src="images/grid4.png" align="middle" width="300px"/>
+    </td>
+    <td>
+      <img src="images/grid5.png" align="middle" width="300px"/>
+    </td>
+    <td>
+      <img src="images/grid6.png" align="middle" width="300px"/>
+    </td>
+  </tr>
+</table>
+</div>
+
 </td></tr></table></div>
 
-<a name="results-2" class="anchor"><h4>Part 2.2: Volumetric fog</h4></a>
-<p>The following is a rendering with volumetric fog on. The light was purple
-and the fog was white.</p>
-<div class="imgholder"><table><tr><td>
-<a href="#" data-featherlight="images/cb_float_fog.png">
-<img src="images/cb_float_fog.png"/></a>
-<figcaption>Rendering of <code>dae/sky/CBspheres_float.dae</code></figcaption>
+<a name="results-2" class="anchor"><h4>Black and white renderings</h4></a>
+<p>The following is a rendering of the black hole visualized using only the light interaction from the accretion disk.</p>
+<div align="middle">
+  <table style="width=100%">
+  <tr>
+    <td>
+      <img src="images/bw_render.png" align="middle" width="300px"/>
+    </td>
+    <td>
+      <img src="images/bw_render2.jpg" align="middle" width="300px"/>
+    </td>
+    <td>
+      <img src="images/bw_render_lowres.png" align="middle" width="300px"/>
+    </td>
+  </tr>
+  <figcaption>Rendering of black hole using white accretion disk</figcaption>
+</table>
+</div>
 </td></tr></table></div>
 
-<a name="results-3" class="anchor"><h4>Part 2.3: Glossy</h4></a>
-<p>The following is a rendering of the reflective material with different
-roughnesses, though both are greater than 0.</p>
-<div class="imgholder"><table><tr><td>
-<a href="#" data-featherlight="images/cb_spheresglossy.png">
-<img src="images/cb_spheresglossy.png"/></a>
-<figcaption>Rendering of <code>dae/sky/CBspheres_glossy.dae</code></figcaption>
+<a name="results-3" class="anchor"><h4>Other renderings</h4></a>
+<p>The following are fun renderings we did just to test the effects of altering physics parameters on light interaction.</p>
+<div align="middle">
+  <table style="width=100%">
+  <tr>
+    <td>
+      <img src="images/no_gravity.png" align="middle" width="300px"/>
+      <figcaption align="middle">zero gravity</figcaption>
+    </td>
+    <td>
+      <img src="images/grid_binary.png" align="middle" width="300px"/>
+      <figcaption align="middle">binary system</figcaption>
+    </td>
+    <td>
+      <img src="images/grid_extra2.png" align="middle" width="300px"/>
+      <figcaption align="middle">INSERT LABEL HERE</figcaption>
+    </td>
+  </tr>
+</table>
+</div>
 </td></tr></table></div>
 
 </section>
@@ -238,28 +236,22 @@ roughnesses, though both are greater than 0.</p>
 <a name="references" class="anchor"><h3>Part 3: References</h3></a>
 
 <a name="ref1" class="ref">[1]</a>
-<a href="https://devblogs.nvidia.com/parallelforall/cuda-pro-tip-kepler-texture-objects-improve-performance-and-flexibility/">
-M. Clark, "CUDA Pro Tip: Kepler Texture Objects Improve Performance and
-Flexibility", NVidia Accelerated Computinig, 2013. [Online]. Available:
-https://devblogs.nvidia.com/parallelforall/cuda-pro-tip-kepler-texture-objects-improve-performance-and-flexibility/.</a></br>
+<a href="https://devblogs.nvidia.com/gpu-accelerated-black-hole-simulations/">
+INSERT REF HERE
+Retrieved from:
+https://devblogs.nvidia.com/gpu-accelerated-black-hole-simulations/.</a></br>
 
 <a name="ref2" class="ref">[2]</a>
-<a href="https://devblogs.nvidia.com/parallelforall/thinking-parallel-part-iii-tree-construction-gpu/">
-T. Karras, "Thinking Parallel, Part III: Tree Construction on the GPU", NVidia
-Accelerated Computing, 2012. [Online]. Available:
-https://devblogs.nvidia.com/parallelforall/thinking-parallel-part-iii-tree-construction-gpu/.</a></br>
+<a href="https://github.com/seva100/blackhole-simulation">
+  INSERT REF HERE
+  Retrieved from:
+https://github.com/seva100/blackhole-simulation.</a></br>
 
 <a name="ref3" class="ref">[3]</a>
-<a href="https://devblogs.nvidia.com/parallelforall/thinking-parallel-part-ii-tree-traversal-gpu/">
-T. Karras, "Thinking Parallel, Part II: Tree Traversal on the GPU", NVidia
-Accelerated Computing, 2012. [Online]. Available:
-https://devblogs.nvidia.com/parallelforall/thinking-parallel-part-ii-tree-traversal-gpu/.</a></br>
-
-<a name="ref4" class="ref">[4]</a>
-<a href="http://graphics.stanford.edu/papers/veach_thesis/thesis.pdf">E.
-Veach, "Robust Monte Carlo Methods for Light Transport Simulation", Ph.D,
-Stanford University, 1997.</a></br>
-
+<a href="https://en.wikipedia.org/wiki/Accretion_disk">
+  INSERT REF HERE
+  Retrieved from:
+https://en.wikipedia.org/wiki/Accretion_disk.</a></br>
 </section>
 
 </section>

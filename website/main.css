@@ -54,7 +54,7 @@ a.ref {
 a.reflink {
     font-size: 60%;
     vertical-align: super;
-}
+}*/
 
 div.codeWrapper {
     background-color: #F0F3F7;
@@ -66,6 +66,7 @@ code {
     color: #567482;
     white-space: pre;
 }
+/*
 
 table.tbl {
     border-collapse: collapse;
