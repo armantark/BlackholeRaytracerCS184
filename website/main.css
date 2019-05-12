@@ -6,8 +6,8 @@ body {
 
 section.header {
     background-color: #ff7328;
-    background-image:url("images/real2.png");
-    background-size: 50% auto;
+    background-image:url("images/header.png");
+    background-size: 100% auto;
     color: #FFF;
     margin: 0;
     padding-top: 10em;
